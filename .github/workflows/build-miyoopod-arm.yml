@@ -3,9 +3,6 @@ name: Build MiyooPod ARM
 on:
   workflow_dispatch:
 
-permissions:
-  contents: read
-
 jobs:
   build:
     runs-on: ubuntu-24.04
@@ -13,59 +10,55 @@ jobs:
     steps:
       - name: Checkout modified source
         uses: actions/checkout@v4
+        with:
+          path: modified
 
       - name: Checkout upstream runtime files
         uses: actions/checkout@v4
         with:
           repository: danfragoso/miyoopod
           path: upstream
-          fetch-depth: 1
 
-      - name: Install build tools and SDL2 headers
+      - name: Install ARM compiler
         run: |
+          sudo dpkg --add-architecture armhf
           sudo apt-get update
-          sudo apt-get install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf make zip libsdl2-dev
-          sudo mkdir -p /root/include /root/lib
-          sudo cp -a /usr/include/SDL2 /root/include/
-          sudo cp -a upstream/libs/. /root/lib/
+          sudo apt-get install -y gcc-arm-linux-gnueabihf
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22.2'
-          cache: true
+          go-version: '1.24'
 
       - name: Prepare MiyooPod app directory
         run: |
-          mkdir -p App
-          cp -a upstream/App/MiyooPod App/
+          mkdir -p modified/app
+          cp -r upstream/app/* modified/app/
 
       - name: Download Go dependencies
+        working-directory: modified
         run: go mod download
 
       - name: Build modified MiyooPod
+        working-directory: modified
         env:
-          GOOS: linux
-          GOARCH: arm
           GOARM: '7'
-          CGO_ENABLED: '1'
-          CC: arm-linux-gnueabihf-gcc
-          CXX: arm-linux-gnueabihf-g++
         run: make go
 
       - name: Verify ARM binary
         run: |
-          file App/MiyooPod/MiyooPod
-          test -x App/MiyooPod/MiyooPod
+          file modified/app/miyoopod
+          test -f modified/app/miyoopod
 
       - name: Package app
         run: |
-          cd App
-          zip -r ../MiyooPod-feature-grouping.zip MiyooPod
+          mkdir -p package/MiyooPod
+          cp -r modified/app/* package/MiyooPod/
+          cd package
+          zip -r ../MiyooPod-Artist-Album-mod.zip MiyooPod
 
       - name: Upload ready-to-use MiyooPod
         uses: actions/upload-artifact@v4
         with:
-          name: MiyooPod-feature-grouping
-          path: MiyooPod-feature-grouping.zip
-          if-no-files-found: error
+          name: MiyooPod-Artist-Album-mod
+          path: MiyooPod-Artist-Album-mod.zip
