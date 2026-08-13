@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MiyooPod - MP3 Player for Miyoo Mini</title>
+    <meta name="description" content="MiyooPod is an iPod-inspired MP3 player for the Miyoo Mini Plus, v4, and Flip running OnionOS. Browse by artist, album, and song with album art, lyrics, themes, and more.">
+    <meta name="theme-color" content="#3b82f6">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="MiyooPod - MP3 Player for Miyoo Mini">
+    <meta property="og:description" content="An iPod-inspired MP3 player for the Miyoo Mini Plus, v4, and Flip.">
+    <meta property="og:image" content="screenshots/hero.png">
+    <meta property="og:url" content="https://github.com/danfragoso/miyoopod">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="MiyooPod - MP3 Player for Miyoo Mini">
+    <meta name="twitter:description" content="An iPod-inspired MP3 player for the Miyoo Mini Plus, v4, and Flip.">
+    <meta name="twitter:image" content="screenshots/hero.png">
+
+    <link rel="icon" type="image/png" href="screenshots/hero.png">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        section[id] {
+            scroll-margin-top: 5rem;
+        }
+
+        .nav-link {
+            position: relative;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: #3b82f6;
+            transition: width 0.25s ease;
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #E8E8E8 0%, #C0C0C0 50%, #A8A8A8 100%);
+        }
+        
+        .feature-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        
+        .screenshot-container {
+            position: relative;
+            overflow: hidden;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        .screenshot-container img {
+            transition: transform 0.3s ease;
+        }
+        
+        .screenshot-container:hover img {
+            transform: scale(1.05);
+        }
+
+        .code-block {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border-radius: 8px;
+            padding: 1.5rem;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+        }
+
+        .section-title {
+            position: relative;
+            display: inline-block;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 0;
+            width: 60px;
+            height: 4px;
+            background: linear-gradient(90deg, #4A90E2, #2E5C8A);
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900">
+
+    <!-- Sticky Nav -->
+    <nav id="navbar" class="sticky top-0 z-50 bg-white/80 backdrop-blur border-b border-gray-200">
+        <div class="container mx-auto px-6">
+            <div class="flex items-center justify-between h-16">
+                <a href="#top" id="nav-brand" class="text-xl font-semibold tracking-tight opacity-0 transition-opacity duration-300">MiyooPod</a>
+                <div class="hidden md:flex items-center gap-7 text-sm font-medium text-gray-600">
+                    <a href="#about" class="nav-link hover:text-gray-900 transition">Overview</a>
+                    <a href="#screenshots" class="nav-link hover:text-gray-900 transition">Screenshots</a>
+                    <a href="#getting-started" class="nav-link hover:text-gray-900 transition">Setup</a>
+                    <a href="#settings" class="nav-link hover:text-gray-900 transition">Settings</a>
+                    <a href="#technical" class="nav-link hover:text-gray-900 transition">Technical</a>
+                    <a href="#changelog" class="nav-link hover:text-gray-900 transition">Changelog</a>
+                </div>
+                <a href="#getting-started" class="bg-blue-600 text-white px-4 py-2 rounded-full text-sm font-semibold hover:bg-blue-700 transition">Install</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="top" class="bg-white py-20">
+        <div class="container mx-auto px-6">
+            <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-12">
+                <!-- Device Image -->
+                <div class="flex-1 flex justify-center">
+                    <img src="screenshots/hero.png" alt="MiyooPod Player" class="max-w-full h-auto" style="max-height: 600px;">
+                </div>
+                
+                <!-- Text Content -->
+                <div class="flex-1 text-center md:text-left">
+                    <h1 class="text-7xl font-light mb-6" style="font-family: 'Myriad Pro', 'Helvetica Neue', Helvetica, Arial, sans-serif;">MiyooPod.</h1>
+                    <p class="text-4xl font-light text-gray-600 mb-12" style="font-family: 'Myriad Pro', 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+                        MP3 player for the Miyoo Mini Plus, v4, and Flip.
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
+                        <a href="https://github.com/danfragoso/miyoopod" class="bg-gray-800 text-white px-8 py-3 rounded-full font-semibold hover:bg-gray-900 transition shadow-lg">
+                            View on GitHub
+                        </a>
+                        <a href="https://github.com/danfragoso/miyoopod/raw/refs/heads/main/releases/MiyooPod.zip" class="bg-blue-500 text-white px-8 py-3 rounded-full font-semibold hover:bg-blue-600 transition shadow-lg">
+                            Download
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- What is MiyooPod Section -->
+    <section id="about" class="py-20 bg-white">
+        <div class="container mx-auto px-6">
+            <div class="max-w-4xl mx-auto">
+                <h2 class="text-4xl font-bold mb-8 section-title">What is MiyooPod?</h2>
+                <div class="text-lg text-gray-700 space-y-6 leading-relaxed">
+                    <p>
+                        MiyooPod is an MP3 player for the <strong>Miyoo Mini Plus, Mini v4, and Mini Flip</strong> running OnionOS.
+                        Inspired by the classic iPod interface.
+                    </p>
+                    <div class="bg-blue-50 border-l-4 border-blue-500 p-6 rounded-r-lg">
+                        <p class="text-blue-900 font-semibold mb-2">Key Features:</p>
+                        <ul class="list-disc list-inside text-blue-800 space-y-2">
+                            <li>iPod-inspired user interface with multiple themes</li>
+                            <li>Browse by Artists, Albums, and Songs</li>
+                            <li>Search/filter lists with on-screen A-Z keyboard</li>
+                            <li>Album art display with automatic fetching from MusicBrainz</li>
+                            <li>Shuffle and repeat modes</li>
+                            <li>Seek/fast-forward/rewind with accelerating speed</li>
+                            <li>Over-the-air updates</li>
+                            <li>Session persistence (queue, position, shuffle/repeat restored on launch)</li>
+                            <li>Native 640×480 resolution optimized for Miyoo Mini</li>
+                            <li>17 customizable themes (Classic iPod, Dark Blue, Nord, Cyberpunk, and more)</li>
+                            <li>MP3, FLAC, and OGG/Vorbis playback</li>
+                            <li>Lyrics display with LRC timed sync and auto-scroll</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Screenshots Section -->
+    <section id="screenshots" class="py-20 bg-gray-50">
+        <div class="container mx-auto px-6">
+            <h2 class="text-4xl font-bold mb-12 text-center section-title">Screenshots</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                <div class="screenshot-container bg-white p-4">
+                    <img src="screenshots/main.png" alt="Main Menu" class="w-full h-auto">
+                    <p class="text-center mt-4 text-gray-600 font-medium">Main Menu</p>
+                </div>
+                <div class="screenshot-container bg-white p-4">
+                    <img src="screenshots/now-playing.png" alt="Now Playing" class="w-full h-auto">
+                    <p class="text-center mt-4 text-gray-600 font-medium">Now Playing</p>
+                </div>
+                <div class="screenshot-container bg-white p-4">
+                    <img src="screenshots/albums.png" alt="Albums List" class="w-full h-auto">
+                    <p class="text-center mt-4 text-gray-600 font-medium">Albums List</p>
+                </div>
+                <div class="screenshot-container bg-white p-4">
+                    <img src="screenshots/artists.png" alt="Artists" class="w-full h-auto">
+                    <p class="text-center mt-4 text-gray-600 font-medium">Artists</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Getting Started Section -->
+    <section id="getting-started" class="py-20 bg-white">
+        <div class="container mx-auto px-6">
+            <div class="max-w-4xl mx-auto">
+                <h2 class="text-4xl font-bold mb-12 section-title">Getting Started</h2>
+                
+                <!-- Installation -->
+                <div class="mb-12">
+                    <h3 class="text-2xl font-semibold mb-4 text-blue-600">Installation</h3>
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <p class="mb-4 text-gray-700">Install MiyooPod on your Miyoo Mini Plus running OnionOS:</p>
+                        <ol class="list-decimal list-inside space-y-3 text-gray-700">
+                            <li>Download <a href="https://github.com/danfragoso/miyoopod/raw/refs/heads/main/releases/MiyooPod.zip" class="text-blue-600 hover:text-blue-800 underline">MiyooPod.zip</a></li>
+                            <li>Extract the MiyooPod.zip file</li>
+                            <li>Connect your Miyoo Mini Plus SD card to your computer</li>
+                            <li>Copy the <code class="bg-gray-200 px-2 py-1 rounded">MiyooPod</code> folder to <code class="bg-gray-200 px-2 py-1 rounded">/App</code> on your SD card</li>
+                            <li>Safely eject the SD card and insert it back into your Miyoo Mini Plus</li>
+                            <li>MiyooPod will appear in your Apps menu</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <!-- Adding Songs -->
+                <div class="mb-12">
+                    <h3 class="text-2xl font-semibold mb-4 text-blue-600">Adding Songs</h3>
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <p class="mb-4 text-gray-700">MiyooPod reads music files from your SD card's Music folder:</p>
+                        <div class="code-block mb-4">
+                            <code>/mnt/SDCARD/Media/Music/</code>
+                        </div>
+                        <ol class="list-decimal list-inside space-y-3 text-gray-700">
+                            <li>Connect your Miyoo Mini SD card to your computer</li>
+                            <li>Navigate to <code class="bg-gray-200 px-2 py-1 rounded">/Media/Music/</code> folder</li>
+                            <li>Copy your MP3 files and folders into this directory</li>
+                            <li>Organize your music by artist/album folders for better library organization</li>
+                            <li>Launch MiyooPod - it will automatically scan and index your music library</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <!-- Supported Formats -->
+                <div class="mb-12">
+                    <h3 class="text-2xl font-semibold mb-4 text-blue-600">Supported Formats</h3>
+                    <div class="bg-blue-50 p-6 rounded-lg border-2 border-blue-200">
+                        <p class="text-lg mb-4 text-gray-800">
+                            MiyooPod supports <strong>MP3</strong>, <strong>FLAC</strong>, and <strong>OGG/Vorbis</strong> audio files.
+                        </p>
+                        <p class="text-gray-700 mb-4">
+                            <strong>Recommended:</strong> <span class="text-blue-700 font-bold">MP3 @ 256kbps</span> — for the best balance of quality and performance on the Miyoo Mini's hardware.
+                        </p>
+                        <ul class="list-disc list-inside space-y-2 text-gray-700">
+                            <li><strong>Format:</strong> MP3 (MPEG-1 Audio Layer 3)</li>
+                            <li><strong>Bitrate:</strong> 256kbps CBR (Constant Bitrate) or VBR V0</li>
+                            <li><strong>Sample Rate:</strong> 44.1kHz</li>
+                            <li><strong>Channels:</strong> Stereo</li>
+                        </ul>
+                        <p class="mt-4 text-sm text-gray-600">
+                            <em>FLAC and OGG are fully supported. MP3 is recommended for best performance — the Miyoo Mini's audio output doesn't benefit from lossless quality, and high-bitrate files may cause playback issues.</em>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Album Art -->
+                <div class="mb-12">
+                    <h3 class="text-2xl font-semibold mb-4 text-blue-600">Album Artwork</h3>
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <p class="mb-4 text-gray-700">MiyooPod supports album artwork in two ways:</p>
+                        
+                        <h4 class="font-semibold text-lg mb-2 text-gray-800">1. Embedded Artwork</h4>
+                        <p class="mb-4 text-gray-700">
+                            MiyooPod automatically extracts album art embedded in your MP3 files' ID3 tags. Most music files 
+                            downloaded from iTunes, Amazon, or properly tagged using tools like MusicBrainz Picard will already have embedded artwork.
+                        </p>
+
+                        <h4 class="font-semibold text-lg mb-2 text-gray-800">2. Automatic Download from MusicBrainz</h4>
+                        <p class="mb-4 text-gray-700">
+                            For albums without embedded artwork, MiyooPod can automatically fetch album covers from MusicBrainz:
+                        </p>
+                        <ol class="list-decimal list-inside space-y-2 text-gray-700 mb-4">
+                            <li>Navigate to <strong>Settings</strong> from the main menu</li>
+                            <li>Select <strong>"Fetch Album Art"</strong></li>
+                            <li>MiyooPod will scan your library and download missing album artwork</li>
+                            <li>Progress is shown on-screen with album details</li>
+                            <li>Downloaded artwork is cached locally for fast loading</li>
+                        </ol>
+
+                        <div class="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r">
+                            <p class="text-blue-800 text-sm">
+                                <strong>Note:</strong> This requires an internet connection via WiFi. Artwork is stored in 
+                                <code class="bg-blue-100 px-1 rounded">/mnt/SDCARD/Media/Music/.miyoopod_artwork/</code>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Settings Section -->
+    <section id="settings" class="py-20 bg-gray-50">
+        <div class="container mx-auto px-6">
+            <div class="max-w-4xl mx-auto">
+                <h2 class="text-4xl font-bold mb-12 section-title">Settings &amp; Troubleshooting</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="feature-card bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-xl font-semibold mb-3 text-blue-600">Themes</h3>
+                        <p class="text-gray-700 mb-3">
+                            Choose from <strong>11 visual themes</strong>. 
+                            Each theme customizes colors for backgrounds, selections, headers, progress bars, and all UI elements.
+                        </p>
+                        <p class="text-sm text-gray-600">
+                            Available themes: Classic iPod, Dark, Dark Blue, Light, Nord, Solarized Dark, Matrix Green, 
+                            Retro Amber, Purple Haze, Cyberpunk, and Coffee.
+                        </p>
+                    </div>
+
+                    <div class="feature-card bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-xl font-semibold mb-3 text-blue-600">Screen Lock</h3>
+                        <p class="text-gray-700">
+                            Press the <strong>POWER</strong> button to lock the screen (and again to unlock), preventing 
+                            accidental presses during playback. Hold <strong>POWER</strong> for a few seconds to quit the app.
+                        </p>
+                    </div>
+
+                    <div class="feature-card bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-xl font-semibold mb-3 text-blue-600">Auto Screen Lock</h3>
+                        <p class="text-gray-700">
+                            Automatically lock the screen after a period of inactivity (1, 3, 5, or 10 minutes, or disabled) 
+                            to save battery while music keeps playing.
+                        </p>
+                    </div>
+
+                    <div class="feature-card bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-xl font-semibold mb-3 text-blue-600">Fetch Album Art</h3>
+                        <p class="text-gray-700">
+                            Automatically download missing album artwork from MusicBrainz. The app will scan your library 
+                            and fetch high-quality cover art for albums without embedded images.
+                        </p>
+                    </div>
+
+                    <div class="feature-card bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-xl font-semibold mb-3 text-blue-600">Toggle Logs</h3>
+                        <p class="text-gray-700">
+                            Enable or disable debug logging. Useful for troubleshooting issues or when reporting bugs. 
+                            Logs are written to the Music folder for easy access.
+                        </p>
+                    </div>
+
+                    <div class="feature-card bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-xl font-semibold mb-3 text-blue-600">Rescan Library</h3>
+                        <p class="text-gray-700">
+                            Force a complete rescan of your music library. Use this after adding new songs or when 
+                            the library becomes out of sync.
+                        </p>
+                    </div>
+
+                    <div class="feature-card bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-xl font-semibold mb-3 text-blue-600">About</h3>
+                        <p class="text-gray-700">
+                            View app version, author information, and access support resources. Includes version checking 
+                            to notify you of available updates.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="mt-8 bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-semibold mb-4 text-gray-800">Settings Storage</h3>
+                    <p class="text-gray-700 mb-2">
+                        Your preferences are automatically saved to:
+                    </p>
+                    <div class="code-block">
+                        <code>/mnt/SDCARD/Media/Music/.miyoopod_settings.json</code>
+                    </div>
+                </div>
+
+                <!-- Troubleshooting -->
+                <h3 class="text-3xl font-bold mt-20 mb-8 pt-10 border-t border-gray-200 section-title">Troubleshooting</h3>
+
+                <div class="space-y-6">
+                    <!-- App won't launch -->
+                    <div>
+                        <h4 class="text-lg font-semibold mb-3 text-blue-600">App does not launch / crashes on startup</h4>
+                        <div class="bg-white p-6 rounded-lg shadow-sm">
+                            <p class="text-gray-700 mb-4">The library cache files may be corrupted. Connect your SD card to your computer and delete these hidden files:</p>
+                            <div class="code-block mb-4">
+                                <code>/mnt/SDCARD/Media/Music/.miyoopod_library.json<br>/mnt/SDCARD/Media/Music/.miyoopod_state.json</code>
+                            </div>
+                            <p class="text-gray-700">MiyooPod will rescan your library on the next launch.</p>
+                        </div>
+                    </div>
+
+                    <!-- Album art issues -->
+                    <div>
+                        <h4 class="text-lg font-semibold mb-3 text-blue-600">Album art not displaying correctly</h4>
+                        <div class="bg-white p-6 rounded-lg shadow-sm">
+                            <p class="text-gray-700">Open <strong>Settings → Clear App Data</strong> to wipe the artwork cache and library metadata. MiyooPod will rebuild everything on the next launch. You can then use <strong>Fetch Album Art</strong> again to re-download missing covers.</p>
+                        </div>
+                    </div>
+
+                    <!-- Checking logs -->
+                    <div>
+                        <h4 class="text-lg font-semibold mb-3 text-blue-600">Checking logs</h4>
+                        <div class="bg-white p-6 rounded-lg shadow-sm">
+                            <p class="text-gray-700 mb-4">If the app is misbehaving, enable logging from <strong>Settings → Toggle Logs</strong>, reproduce the issue, then check the log file on your SD card:</p>
+                            <div class="code-block mb-4">
+                                <code>/mnt/SDCARD/App/MiyooPod/miyoopod.log</code>
+                            </div>
+                            <p class="text-gray-700">Attach this file when reporting a bug on <a href="https://github.com/danfragoso/miyoopod/issues" class="text-blue-600 hover:text-blue-800 underline">GitHub Issues</a>.</p>
+                        </div>
+                    </div>
+
+                    <!-- Broken OTA update -->
+                    <div>
+                        <h4 class="text-lg font-semibold mb-3 text-blue-600">A broken update made the app unusable</h4>
+                        <div class="bg-white p-6 rounded-lg shadow-sm">
+                            <p class="text-gray-700 mb-4">If an OTA update left the app in a broken state, manually reinstall the latest version:</p>
+                            <ol class="list-decimal list-inside space-y-3 text-gray-700">
+                                <li>Download <a href="https://github.com/danfragoso/miyoopod/raw/refs/heads/main/releases/MiyooPod.zip" class="text-blue-600 hover:text-blue-800 underline">MiyooPod.zip</a></li>
+                                <li>Extract and copy the <code class="bg-gray-200 px-2 py-1 rounded">MiyooPod</code> folder to <code class="bg-gray-200 px-2 py-1 rounded">/App</code> on your SD card, overwriting the existing files</li>
+                                <li>Your music library and settings are stored separately and will not be affected</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Technical Details Section -->
+    <section id="technical" class="py-20 bg-white">
+        <div class="container mx-auto px-6">
+            <div class="max-w-4xl mx-auto">
+                <h2 class="text-4xl font-bold mb-12 section-title">Technical Details</h2>
+
+                <!-- Architecture Overview -->
+                <div class="mb-12">
+                    <h3 class="text-2xl font-semibold mb-4 text-blue-600">Architecture Overview</h3>
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <p class="text-gray-700 mb-4">
+                            MiyooPod is built using <strong>Go (Golang) 1.22.2</strong> with native C bindings (CGO) for low-level graphics and audio operations. 
+                            The application is cross-compiled for ARM architecture and optimized for embedded Linux systems.
+                        </p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                            <div class="bg-white p-4 rounded border-l-4 border-blue-500">
+                                <h4 class="font-semibold mb-2">Platform Target</h4>
+                                <ul class="text-sm text-gray-700 space-y-1">
+                                    <li>• <strong>Device:</strong> Miyoo Mini Plus, Mini v4, Mini Flip</li>
+                                    <li>• <strong>OS:</strong> OnionOS (Linux-based)</li>
+                                    <li>• <strong>CPU:</strong> ARM Cortex-A7 (dual-core)</li>
+                                    <li>• <strong>Display:</strong> 640×480 native resolution</li>
+                                </ul>
+                            </div>
+                            <div class="bg-white p-4 rounded border-l-4 border-blue-500">
+                                <h4 class="font-semibold mb-2">Build Configuration</h4>
+                                <ul class="text-sm text-gray-700 space-y-1">
+                                    <li>• <strong>Compiler:</strong> arm-linux-gnueabihf-gcc</li>
+                                    <li>• <strong>Go Version:</strong> 1.22.2</li>
+                                    <li>• <strong>CGO:</strong> Enabled</li>
+                                    <li>• <strong>GOARCH:</strong> arm</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Data Storage -->
+                <div class="mb-12">
+                    <h3 class="text-2xl font-semibold mb-4 text-blue-600">Data Storage</h3>
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <div class="space-y-4">
+                            <div>
+                                <h4 class="font-semibold mb-2">Library Cache</h4>
+                                <p class="text-gray-700 mb-2">
+                                    Music library metadata is serialized to JSON and stored at:
+                                </p>
+                                <div class="code-block text-sm">
+                                    <code>/mnt/SDCARD/Media/Music/.miyoopod_library.json</code>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold mb-2">Settings</h4>
+                                <p class="text-gray-700 mb-2">
+                                    User preferences (theme, lock key, log settings) are stored at:
+                                </p>
+                                <div class="code-block text-sm">
+                                    <code>/mnt/SDCARD/Media/Music/.miyoopod_settings.json</code>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold mb-2">Album Artwork</h4>
+                                <p class="text-gray-700 mb-2">
+                                    Downloaded album art is cached in:
+                                </p>
+                                <div class="code-block text-sm">
+                                    <code>/mnt/SDCARD/Media/Music/.miyoopod_artwork/</code>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Generated Content -->
+                <div class="mb-12">
+                    <h3 class="text-2xl font-semibold mb-4 text-blue-600">AI Generated Content</h3>
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <p class="text-gray-700">
+                            MiyooPod was developed with the help of AI coding assistant tools, and portions of its codebase include AI-generated code.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- User Data -->
+                <div class="mb-12">
+                    <h3 class="text-2xl font-semibold mb-4 text-blue-600">User Data</h3>
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <p class="text-gray-700">
+                            MiyooPod uses PostHog to capture error logs, exceptions, crashes, and user interactions. If you are not comfortable with this, you can go into <strong>Settings</strong> and disable the <strong>Developer Logs</strong> option.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Support Section -->
+    <section class="py-20 bg-gray-50">
+        <div class="container mx-auto px-6">
+            <div class="max-w-4xl mx-auto text-center">
+                <h2 class="text-4xl font-bold mb-8 section-title inline-block">Support the Project</h2>
+                <p class="text-xl text-gray-700 mb-12">
+                    MiyooPod is open-source and free to use. Here's how you can help make it even better:
+                </p>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="bg-white p-8 rounded-xl shadow-lg feature-card">
+                        <div class="w-12 h-12 mx-auto mb-4 flex items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m0 3.75h.008M10.34 3.94l-8.4 14.55A1.5 1.5 0 003.24 21h17.52a1.5 1.5 0 001.3-2.51L13.66 3.94a1.5 1.5 0 00-2.6 0z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-3">Report Issues</h3>
+                        <p class="text-gray-600 mb-4">
+                            Found a bug? Let us know on GitHub Issues so we can fix it.
+                        </p>
+                        <a href="https://github.com/danfragoso/miyoopod/issues" 
+                           class="inline-block bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition">
+                            Report Issue
+                        </a>
+                    </div>
+
+                    <div class="bg-white p-8 rounded-xl shadow-lg feature-card">
+                        <div class="w-12 h-12 mx-auto mb-4 flex items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 3.75l1.5 4.5 4.5 1.5-4.5 1.5-1.5 4.5-1.5-4.5-4.5-1.5 4.5-1.5 1.5-4.5zM18 3v3m1.5-1.5h-3M18 15v3m1.5-1.5h-3" />
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-3">Request Features</h3>
+                        <p class="text-gray-600 mb-4">
+                            Have an idea for a new feature? Share it with the community!
+                        </p>
+                        <a href="https://github.com/danfragoso/miyoopod/issues/new" 
+                           class="inline-block bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition">
+                            Suggest Feature
+                        </a>
+                    </div>
+
+                    <div class="bg-white p-8 rounded-xl shadow-lg feature-card">
+                        <div class="w-12 h-12 mx-auto mb-4 flex items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.5l2.31 4.68 5.17.75-3.74 3.64.88 5.15-4.62-2.43-4.62 2.43.88-5.15-3.74-3.64 5.17-.75L11.48 3.5z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-3">Star on GitHub</h3>
+                        <p class="text-gray-600 mb-4">
+                            Show your appreciation by starring the repository on GitHub.
+                        </p>
+                        <a href="https://github.com/danfragoso/miyoopod" 
+                           class="inline-block bg-blue-600 text-white px-6 py-2 rounded-full hover:bg-blue-700 transition">
+                            Star Project
+                        </a>
+                    </div>
+                </div>
+
+                <div class="mt-12 bg-white p-8 rounded-xl shadow-lg">
+                    <h3 class="text-2xl font-semibold mb-4">Contribute Code</h3>
+                    <p class="text-gray-700 mb-4">
+                        MiyooPod is open-source! Developers are welcome to contribute improvements, bug fixes, 
+                        and new features via pull requests.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Changelog Section -->
+    <section id="changelog" class="py-20 bg-white">
+        <div class="container mx-auto px-6">
+            <div class="max-w-4xl mx-auto">
+                <h2 class="text-4xl font-bold mb-12 text-center section-title">Changelog</h2>
+                
+                <!-- Version 0.0.8 -->
+                <div class="bg-white p-8 rounded-xl shadow-lg mb-8">
+                    <div class="flex items-center gap-4 mb-4">
+                        <span class="bg-blue-500 text-white px-4 py-1 rounded-full text-sm font-semibold">v0.0.8</span>
+                        <span class="text-gray-500 text-sm">Latest</span>
+                    </div>
+                    <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">New Features</h4>
+                    <ul class="space-y-2 text-gray-700 list-disc pl-5">
+                        <li>Adjustable font size (Small, Medium, or Large) from Settings</li>
+                        <li>CPU on Lock setting to keep the performance governor while the screen is locked, instead of dropping to power save</li>
+                    </ul>
+                </div>
+
+                <!-- Version 0.0.7 -->
+                <div class="bg-white p-8 rounded-xl shadow-lg mb-8">
+                    <div class="flex items-center gap-4 mb-4">
+                        <span class="bg-gray-400 text-white px-4 py-1 rounded-full text-sm font-semibold">v0.0.7</span>
+                    </div>
+                    <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">New Features</h4>
+                    <ul class="space-y-2 text-gray-700 mb-6 list-disc pl-5">
+                        <li>Single-button screen lock: press POWER to lock or unlock, and hold POWER to quit the app</li>
+                        <li>Bitrate and sample rate are now shown on the Now Playing format badge</li>
+                        <li>Released under the MIT License, with third-party license notices included</li>
+                    </ul>
+                    <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Improvements</h4>
+                    <ul class="space-y-2 text-gray-700 mb-6 list-disc pl-5">
+                        <li>Faster text rendering with a glyph and label sprite cache (glyph atlas)</li>
+                        <li>Smoother menu navigation via frame caching and direct-pixel drawing in hot paths</li>
+                        <li>Better battery life: adaptive polling, CPU governor lowered while locked, and an event-driven power button</li>
+                        <li>Audio is loaded into RAM to reduce SD card I/O during playback</li>
+                        <li>Faster library scanning, and album art no longer freezes the UI (pre-scaled artwork cache)</li>
+                        <li>Now Playing layout refinements with centered controls and better use of space</li>
+                        <li>Library scan skips macOS and Windows metadata files</li>
+                        <li>Removed the screen peek feature — the screen stays off while locked</li>
+                    </ul>
+                    <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Bug Fixes</h4>
+                    <ul class="space-y-2 text-gray-700 list-disc pl-5">
+                        <li>Fixed track duration showing 0 on first play</li>
+                        <li>Fixed zero volume when resuming a saved, paused session</li>
+                        <li>Fixed brightness flash when unlocking</li>
+                        <li>Fixed shuffle so selecting a song plays that exact song</li>
+                        <li>Fixed the About screen reopening immediately after closing it</li>
+                        <li>Fixed the marquee and progress bar drawing over the lock and power-exit overlays</li>
+                        <li>Fixed race conditions that could corrupt the framebuffer during background work</li>
+                    </ul>
+                </div>
+
+                <!-- Version 0.0.6 -->
+                <div class="bg-white p-8 rounded-xl shadow-lg mb-8">
+                    <div class="flex items-center gap-4 mb-4">
+                        <span class="bg-gray-400 text-white px-4 py-1 rounded-full text-sm font-semibold">v0.0.6</span>
+                    </div>
+                    <ul class="space-y-2 text-gray-700 list-disc pl-5">
+                        <li>
+                            <span>FLAC and OGG/Vorbis playback support (decoded via statically linked drflac and stb_vorbis in SDL2_mixer — no extra libraries required)</span>
+                        </li>
+                        <li>
+                            <span>Lyrics support: embedded lyrics (ID3 USLT, Vorbis comments) displayed with word-wrap and smooth scrolling</span>
+                        </li>
+                        <li>
+                            <span>LRC timed lyrics: synchronized line highlighting with auto-scroll following playback position, and manual scroll override (press A to re-enable auto-follow)</span>
+                        </li>
+                        <li>
+                            <span>Hold ↑/↓ to scroll lists continuously — no more repeated presses needed to navigate long lists</span>
+                        </li>
+                        <li>
+                            <span>SELECT + START to quit the app from any screen</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Version 0.0.5 -->
+                <div class="bg-white p-8 rounded-xl shadow-lg mb-8">
+                    <div class="flex items-center gap-4 mb-4">
+                        <span class="bg-gray-400 text-white px-4 py-1 rounded-full text-sm font-semibold">v0.0.5</span>
+                    </div>
+                    <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">New Features</h4>
+                    <ul class="space-y-2 text-gray-700 mb-6 list-disc pl-5">
+                        <li>
+                            <span>Over-the-air updates with download progress, checksum verification, and automatic rollback on failure</span>
+                        </li>
+                        <li>
+                            <span>Search: filter Artists, Albums, and Songs with an on-screen A-Z keyboard (press SELECT on any list)</span>
+                        </li>
+                        <li>
+                            <span>Seek/fast-forward/rewind: hold L or R on the Now Playing screen with accelerating speed</span>
+                        </li>
+                        <li>
+                            <span>Session persistence: queue, playback position, shuffle/repeat state, and current track restored across launches</span>
+                        </li>
+                        <li>
+                            <span>Header marquee: now-playing track info scrolls in the header bar when browsing menus</span>
+                        </li>
+                        <li>
+                            <span>Crash reporting: fatal panics and C-level signals are logged and reported automatically</span>
+                        </li>
+                        <li>
+                            <span>Clear App Data option in Settings to reset library cache, settings, and artwork</span>
+                        </li>
+                    </ul>
+                    <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Improvements</h4>
+                    <ul class="space-y-2 text-gray-700 mb-6 list-disc pl-5">
+                        <li>
+                            <span>Faster startup: version check no longer blocks splash screen; album art uses fast RGBA pixel cache on disk</span>
+                        </li>
+                        <li>
+                            <span>Non-blocking library scan with dedicated progress screen showing track count, current folder, and phase</span>
+                        </li>
+                        <li>
+                            <span>Non-blocking album art fetch with progress bar, percentage, and cancel/retry support</span>
+                        </li>
+                        <li>
+                            <span>Volume and brightness persisted across app launches</span>
+                        </li>
+                        <li>
+                            <span>Background album art extraction from MP3 tags after startup</span>
+                        </li>
+                        <li>
+                            <span>Toggle update notifications on/off from Settings</span>
+                        </li>
+                        <li>
+                            <span>Manual "Check for Updates" option in Settings</span>
+                        </li>
+                    </ul>
+                    <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Bug Fixes</h4>
+                    <ul class="space-y-2 text-gray-700 list-disc pl-5">
+                        <li>
+                            <span>Fixed race conditions where background goroutines corrupted the framebuffer causing panics</span>
+                        </li>
+                        <li>
+                            <span>Fixed volume/brightness overlay screen flash caused by partial framebuffer updates</span>
+                        </li>
+                        <li>
+                            <span>Fixed volume resetting on every launch</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Version 0.0.4 -->
+                <div class="bg-white p-8 rounded-xl shadow-lg mb-8">
+                    <div class="flex items-center gap-4 mb-4">
+                        <span class="bg-gray-400 text-white px-4 py-1 rounded-full text-sm font-semibold">v0.0.4</span>
+                    </div>
+                    <ul class="space-y-2 text-gray-700 list-disc pl-5">
+                        <li>
+                            <span>Fixed volume control using MI_AO ioctl (correct indirect buffer layout matching Onion/keymon)</span>
+                        </li>
+                        <li>
+                            <span>Fixed volume icon being cut off in the overlay</span>
+                        </li>
+                        <li>
+                            <span>Added screen lock with power button</span>
+                        </li>
+                        <li>
+                            <span>Added auto screen lock setting (1/3/5/10 min or disabled)</span>
+                        </li>
+                        <li>
+                            <span>Added screen peek toggle (enable/disable screen wake on button press while locked)</span>
+                        </li>
+                        <li>
+                            <span>Fixed brightness and volume being adjustable while screen is locked</span>
+                        </li>
+                        <li>
+                            <span>Fixed now playing progress bar drawing over the lock overlay</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Version 0.0.3 -->
+                <div class="bg-white p-8 rounded-xl shadow-lg mb-8">
+                    <div class="flex items-center gap-4 mb-4">
+                        <span class="bg-gray-400 text-white px-4 py-1 rounded-full text-sm font-semibold">v0.0.3</span>
+                    </div>
+                    <ul class="space-y-2 text-gray-700 list-disc pl-5">
+                        <li>
+                            <span>Fixed PostHog logging initialization order</span>
+                        </li>
+                        <li>
+                            <span>C logs from SDL initialization now properly captured</span>
+                        </li>
+                        <li>
+                            <span>Device model detection and reporting (Mini Plus, Mini v4, Mini Flip)</span>
+                        </li>
+                        <li>
+                            <span>Display resolution metrics sent to analytics</span>
+                        </li>
+                        <li>
+                            <span>Independent local logs and developer logs settings</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Version 0.0.2 -->
+                <div class="bg-white p-8 rounded-xl shadow-lg mb-8">
+                    <div class="flex items-center gap-4 mb-4">
+                        <span class="bg-gray-400 text-white px-4 py-1 rounded-full text-sm font-semibold">v0.0.2</span>
+                    </div>
+                    <ul class="space-y-2 text-gray-700 list-disc pl-5">
+                        <li>
+                            <span>Added support for Miyoo Mini v4 (750×560 resolution)</span>
+                        </li>
+                        <li>
+                            <span>Added support for Miyoo Mini Flip (750×560 resolution)</span>
+                        </li>
+                        <li>
+                            <span>Automatic resolution detection via framebuffer device</span>
+                        </li>
+                        <li>
+                            <span>UI scaling adapts to different screen sizes while maintaining aspect ratio</span>
+                        </li>
+                        <li>
+                            <span>Disabled local logs by default (developer logs still enabled)</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Version 0.0.1 -->
+                <div class="bg-white p-8 rounded-xl shadow-lg">
+                    <div class="flex items-center gap-4 mb-4">
+                        <span class="bg-gray-400 text-white px-4 py-1 rounded-full text-sm font-semibold">v0.0.1</span>
+                    </div>
+                    <ul class="space-y-2 text-gray-700 list-disc pl-5">
+                        <li>
+                            <span>Initial release</span>
+                        </li>
+                        <li>
+                            <span>iPod-inspired user interface</span>
+                        </li>
+                        <li>
+                            <span>11 customizable themes</span>
+                        </li>
+                        <li>
+                            <span>Album art display and automatic fetching from MusicBrainz</span>
+                        </li>
+                        <li>
+                            <span>Shuffle and repeat modes</span>
+                        </li>
+                        <li>
+                            <span>Optimized for Miyoo Mini Plus (640×480)</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-gray-400 py-12">
+        <div class="container mx-auto px-6">
+            <div class="text-center">
+                <p class="mb-4">
+                    Created by <a href="https://github.com/danfragoso" class="text-blue-400 hover:text-blue-300">Danilo Fragoso</a>
+                </p>
+                <p class="text-sm mb-4">
+                    MiyooPod is open-source software, released under the MIT License. Feel free to contribute or fork the project on GitHub!
+                </p>
+                <div class="flex justify-center gap-6 text-sm">
+                    <a href="https://github.com/danfragoso/miyoopod" class="hover:text-white transition">GitHub</a>
+                    <a href="https://github.com/danfragoso/miyoopod/issues" class="hover:text-white transition">Issues</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <script>
+        // Fade in the nav wordmark only after the hero scrolls out of view,
+        // so it doesn't compete with the large hero "MiyooPod." title.
+        (function () {
+            var brand = document.getElementById('nav-brand');
+            var hero = document.getElementById('top');
+            if (!brand || !hero) return;
+            function update() {
+                var show = window.scrollY > hero.offsetHeight - 80;
+                brand.style.opacity = show ? '1' : '0';
+                brand.style.pointerEvents = show ? 'auto' : 'none';
+            }
+            update();
+            window.addEventListener('scroll', update, { passive: true });
+        })();
+    </script>
+
+</body>
+</html>
