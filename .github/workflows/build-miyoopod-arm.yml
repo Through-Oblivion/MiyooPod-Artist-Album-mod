@@ -11,10 +11,17 @@ jobs:
     runs-on: ubuntu-24.04
 
     steps:
-      - name: Checkout modified source
+      - name: Checkout modified MiyooPod
         uses: actions/checkout@v4
         with:
           path: modified
+          fetch-depth: 1
+
+      - name: Checkout Miyoo SDL2 environment
+        uses: actions/checkout@v4
+        with:
+          repository: XK9274/sdl2_miyoo
+          path: sdl2_miyoo
           fetch-depth: 1
 
       - name: Checkout upstream MiyooPod
@@ -24,28 +31,28 @@ jobs:
           path: upstream
           fetch-depth: 1
 
-      - name: Install build tools
+      - name: Build Miyoo SDL2 environment
+        working-directory: sdl2_miyoo
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            gcc-arm-linux-gnueabihf \
-            make \
-            zip \
-            libsdl2-dev
+          docker build -t mmiyoo .
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.24'
-          cache: false
+      - name: Extract Miyoo toolchain from Docker image
+        run: |
+          CONTAINER_ID=$(docker create mmiyoo)
+          docker cp "$CONTAINER_ID:/opt/mmiyoo" ./mmiyoo
+          docker cp "$CONTAINER_ID:/opt/prebuilt" ./prebuilt || true
+          docker rm "$CONTAINER_ID"
 
-      - name: Prepare SDL2 and MiyooPod files
+      - name: Prepare MiyooPod build environment
         run: |
           sudo mkdir -p /root/include
           sudo mkdir -p /root/lib
 
-          sudo cp -r /usr/include/SDL2 /root/include/
-          sudo cp -r upstream/libs/* /root/lib/
+          sudo cp -r mmiyoo/arm-buildroot-linux-gnueabihf/sysroot/usr/include/SDL2 /root/include/
+
+          if [ -d prebuilt ]; then
+            sudo cp -r prebuilt/* /root/lib/ || true
+          fi
 
           sudo chmod 755 /root
           sudo chmod -R a+rX /root/include
@@ -54,12 +61,32 @@ jobs:
           mkdir -p modified/App/MiyooPod
           cp -r upstream/App/MiyooPod/* modified/App/MiyooPod/
 
+      - name: Install host build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y make zip
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          cache: false
+
       - name: Download Go dependencies
         working-directory: modified
         run: go mod download
 
+      - name: Configure Miyoo compiler
+        run: |
+          echo "$GITHUB_WORKSPACE/mmiyoo/bin" >> "$GITHUB_PATH"
+
       - name: Build modified MiyooPod
         working-directory: modified
+        env:
+          CC: ${{ github.workspace }}/mmiyoo/bin/arm-linux-gnueabihf-gcc
+          CGO_ENABLED: '1'
+          GOARCH: arm
+          GOOS: linux
         run: make go
 
       - name: Verify ARM binary
@@ -67,14 +94,17 @@ jobs:
           file modified/App/MiyooPod/MiyooPod
           test -f modified/App/MiyooPod/MiyooPod
 
-      - name: Package MiyooPod
+      - name: Prepare release package
         run: |
           mkdir -p package/MiyooPod
           cp -r modified/App/MiyooPod/* package/MiyooPod/
+
+      - name: Package MiyooPod
+        run: |
           cd package
           zip -r ../MiyooPod-Artist-Album-mod.zip MiyooPod
 
-      - name: Upload MiyooPod
+      - name: Upload ready-to-use MiyooPod
         uses: actions/upload-artifact@v4
         with:
           name: MiyooPod-Artist-Album-mod
