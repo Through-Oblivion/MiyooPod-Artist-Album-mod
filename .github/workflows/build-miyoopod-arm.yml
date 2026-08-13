@@ -1,0 +1,59 @@
+name: Build MiyooPod ARM
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install ARM compiler
+        run: |
+          sudo dpkg --add-architecture armhf
+          sudo apt-get update
+          sudo apt-get install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf make
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache: true
+
+      - name: Download Go dependencies
+        run: go mod download
+
+      - name: Build MiyooPod
+        env:
+          GOOS: linux
+          GOARCH: arm
+          GOARM: '7'
+          CGO_ENABLED: '1'
+          CC: arm-linux-gnueabihf-gcc
+          CXX: arm-linux-gnueabihf-g++
+        run: make go
+
+      - name: Verify binary
+        run: |
+          file App/MiyooPod/MiyooPod
+          test -x App/MiyooPod/MiyooPod
+
+      - name: Package MiyooPod
+        run: |
+          mkdir -p artifact
+          cp -a App/MiyooPod artifact/
+          cd artifact
+          zip -r ../MiyooPod-arm-feature-grouping.zip MiyooPod
+
+      - name: Upload compiled MiyooPod
+        uses: actions/upload-artifact@v4
+        with:
+          name: MiyooPod-arm-feature-grouping
+          path: MiyooPod-arm-feature-grouping.zip
+          if-no-files-found: error
