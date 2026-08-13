@@ -31,27 +31,51 @@ jobs:
           path: upstream
           fetch-depth: 1
 
-      - name: Build Miyoo SDL2 environment
+      - name: Fix archived Debian Buster Dockerfile
         working-directory: sdl2_miyoo
         run: |
-          docker build -t mmiyoo .
+          sed -i 's|http://deb.debian.org/debian-security|http://archive.debian.org/debian-security|g' Dockerfile
+          sed -i 's|http://deb.debian.org/debian|http://archive.debian.org/debian|g' Dockerfile
+          sed -i 's|buster/updates|buster/updates|g' Dockerfile
 
-      - name: Extract Miyoo toolchain from Docker image
+          sed -i '/apt-get update/i RUN printf "Acquire::Check-Valid-Until \\"false\\";\\n" > /etc/apt/apt.conf.d/99no-check-valid-until' Dockerfile
+
+          cat Dockerfile
+
+      - name: Build Miyoo toolchain
+        working-directory: sdl2_miyoo
+        run: |
+          docker build --network=host -t mmiyoo .
+
+      - name: Extract Miyoo toolchain
         run: |
           CONTAINER_ID=$(docker create mmiyoo)
+
           docker cp "$CONTAINER_ID:/opt/mmiyoo" ./mmiyoo
-          docker cp "$CONTAINER_ID:/opt/prebuilt" ./prebuilt || true
+
           docker rm "$CONTAINER_ID"
+
+          find mmiyoo -maxdepth 3 -type d | head -50
 
       - name: Prepare MiyooPod build environment
         run: |
           sudo mkdir -p /root/include
           sudo mkdir -p /root/lib
 
-          sudo cp -r mmiyoo/arm-buildroot-linux-gnueabihf/sysroot/usr/include/SDL2 /root/include/
+          if [ -d "mmiyoo/include/SDL2" ]; then
+            sudo cp -r mmiyoo/include/SDL2 /root/include/
+          fi
 
-          if [ -d prebuilt ]; then
-            sudo cp -r prebuilt/* /root/lib/ || true
+          if [ -d "mmiyoo/usr/include/SDL2" ]; then
+            sudo cp -r mmiyoo/usr/include/SDL2 /root/include/
+          fi
+
+          if [ -d "mmiyoo/lib" ]; then
+            sudo cp -r mmiyoo/lib/* /root/lib/ || true
+          fi
+
+          if [ -d "mmiyoo/usr/lib" ]; then
+            sudo cp -r mmiyoo/usr/lib/* /root/lib/ || true
           fi
 
           sudo chmod 755 /root
@@ -61,7 +85,7 @@ jobs:
           mkdir -p modified/App/MiyooPod
           cp -r upstream/App/MiyooPod/* modified/App/MiyooPod/
 
-      - name: Install host build tools
+      - name: Install host tools
         run: |
           sudo apt-get update
           sudo apt-get install -y make zip
@@ -76,31 +100,25 @@ jobs:
         working-directory: modified
         run: go mod download
 
-      - name: Configure Miyoo compiler
+      - name: Locate Miyoo compiler
         run: |
-          echo "$GITHUB_WORKSPACE/mmiyoo/bin" >> "$GITHUB_PATH"
+          find mmiyoo -type f \( -name 'arm-linux-gnueabihf-gcc' -o -name 'arm-linux-gcc' \) -print
 
       - name: Build modified MiyooPod
         working-directory: modified
-        env:
-          CC: ${{ github.workspace }}/mmiyoo/bin/arm-linux-gnueabihf-gcc
-          CGO_ENABLED: '1'
-          GOARCH: arm
-          GOOS: linux
-        run: make go
+        run: |
+          make go
 
       - name: Verify ARM binary
         run: |
           file modified/App/MiyooPod/MiyooPod
           test -f modified/App/MiyooPod/MiyooPod
 
-      - name: Prepare release package
+      - name: Package MiyooPod
         run: |
           mkdir -p package/MiyooPod
           cp -r modified/App/MiyooPod/* package/MiyooPod/
 
-      - name: Package MiyooPod
-        run: |
           cd package
           zip -r ../MiyooPod-Artist-Album-mod.zip MiyooPod
 
