@@ -21,7 +21,6 @@ jobs:
 
       - name: Install ARM compiler
         run: |
-          sudo dpkg --add-architecture armhf
           sudo apt-get update
           sudo apt-get install -y gcc-arm-linux-gnueabihf
 
@@ -32,8 +31,8 @@ jobs:
 
       - name: Prepare MiyooPod app directory
         run: |
-          mkdir -p modified/app
-          cp -r upstream/app/* modified/app/
+          mkdir -p modified/App/MiyooPod
+          cp -r upstream/App/MiyooPod/* modified/App/MiyooPod/
 
       - name: Download Go dependencies
         working-directory: modified
@@ -41,19 +40,17 @@ jobs:
 
       - name: Build modified MiyooPod
         working-directory: modified
-        env:
-          GOARM: '7'
         run: make go
 
       - name: Verify ARM binary
         run: |
-          file modified/app/miyoopod
-          test -f modified/app/miyoopod
+          file modified/App/MiyooPod/MiyooPod
+          test -f modified/App/MiyooPod/MiyooPod
 
       - name: Package app
         run: |
           mkdir -p package/MiyooPod
-          cp -r modified/app/* package/MiyooPod/
+          cp -r modified/App/MiyooPod/* package/MiyooPod/
           cd package
           zip -r ../MiyooPod-Artist-Album-mod.zip MiyooPod
 
