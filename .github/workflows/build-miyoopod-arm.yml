@@ -31,18 +31,34 @@ jobs:
           path: upstream
           fetch-depth: 1
 
-      - name: Fix archived Debian Buster Dockerfile
+      - name: Fix Debian Buster sources inside Dockerfile
         working-directory: sdl2_miyoo
         run: |
-          sed -i 's|http://deb.debian.org/debian-security|http://archive.debian.org/debian-security|g' Dockerfile
-          sed -i 's|http://deb.debian.org/debian|http://archive.debian.org/debian|g' Dockerfile
-          sed -i 's|buster/updates|buster/updates|g' Dockerfile
+          python3 - <<'PY'
+          from pathlib import Path
 
-          sed -i '/apt-get update/i RUN printf "Acquire::Check-Valid-Until \\"false\\";\\n" > /etc/apt/apt.conf.d/99no-check-valid-until' Dockerfile
+          p = Path("Dockerfile")
+          text = p.read_text()
 
+          text = text.replace(
+              "FROM debian:buster\n",
+              """FROM debian:buster
+
+          RUN sed -i 's|deb.debian.org/debian|archive.debian.org/debian|g' /etc/apt/sources.list && \\
+              sed -i 's|deb.debian.org/debian-security|archive.debian.org/debian-security|g' /etc/apt/sources.list && \\
+              printf 'Acquire::Check-Valid-Until "false";\\n' > /etc/apt/apt.conf.d/99no-check-valid-until
+
+          """
+          )
+
+          p.write_text(text)
+          PY
+
+          echo "===== Dockerfile ====="
           cat Dockerfile
+          echo "======================"
 
-      - name: Build Miyoo toolchain
+      - name: Build Miyoo SDL2 toolchain
         working-directory: sdl2_miyoo
         run: |
           docker build --network=host -t mmiyoo .
@@ -55,7 +71,9 @@ jobs:
 
           docker rm "$CONTAINER_ID"
 
-          find mmiyoo -maxdepth 3 -type d | head -50
+          echo "===== Toolchain ====="
+          find mmiyoo -maxdepth 3 -type d | head -100
+          echo "====================="
 
       - name: Prepare MiyooPod build environment
         run: |
@@ -98,11 +116,13 @@ jobs:
 
       - name: Download Go dependencies
         working-directory: modified
-        run: go mod download
-
-      - name: Locate Miyoo compiler
         run: |
-          find mmiyoo -type f \( -name 'arm-linux-gnueabihf-gcc' -o -name 'arm-linux-gcc' \) -print
+          go mod download
+
+      - name: Find Miyoo ARM compiler
+        run: |
+          echo "Searching for ARM compiler..."
+          find mmiyoo -type f -name 'arm-linux-gnueabihf-gcc' -print
 
       - name: Build modified MiyooPod
         working-directory: modified
