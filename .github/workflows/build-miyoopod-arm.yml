@@ -12,25 +12,37 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: modified
+          fetch-depth: 1
 
-      - name: Checkout upstream runtime files
+      - name: Checkout upstream MiyooPod
         uses: actions/checkout@v4
         with:
           repository: danfragoso/miyoopod
           path: upstream
+          fetch-depth: 1
 
-      - name: Install ARM compiler
+      - name: Install build tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc-arm-linux-gnueabihf
+          sudo apt-get install -y gcc-arm-linux-gnueabihf make zip
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version: '1.24'
+          cache: false
 
-      - name: Prepare MiyooPod app directory
+      - name: Prepare MiyooPod files
         run: |
+          sudo mkdir -p /root/include
+          sudo mkdir -p /root/lib
+
+          sudo cp -r upstream/include/SDL2 /root/include/ 2>/dev/null || true
+          sudo cp -r upstream/libs/* /root/lib/
+
+          sudo chmod -R a+rX /root/include
+          sudo chmod -R a+rX /root/lib
+
           mkdir -p modified/App/MiyooPod
           cp -r upstream/App/MiyooPod/* modified/App/MiyooPod/
 
@@ -42,19 +54,19 @@ jobs:
         working-directory: modified
         run: make go
 
-      - name: Verify ARM binary
+      - name: Verify binary
         run: |
           file modified/App/MiyooPod/MiyooPod
           test -f modified/App/MiyooPod/MiyooPod
 
-      - name: Package app
+      - name: Package MiyooPod
         run: |
           mkdir -p package/MiyooPod
           cp -r modified/App/MiyooPod/* package/MiyooPod/
           cd package
           zip -r ../MiyooPod-Artist-Album-mod.zip MiyooPod
 
-      - name: Upload ready-to-use MiyooPod
+      - name: Upload MiyooPod
         uses: actions/upload-artifact@v4
         with:
           name: MiyooPod-Artist-Album-mod
