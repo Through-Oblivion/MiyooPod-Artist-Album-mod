@@ -3,6 +3,9 @@ name: Build MiyooPod ARM
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-24.04
@@ -24,7 +27,11 @@ jobs:
       - name: Install build tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc-arm-linux-gnueabihf make zip
+          sudo apt-get install -y \
+            gcc-arm-linux-gnueabihf \
+            make \
+            zip \
+            libsdl2-dev
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -32,14 +39,15 @@ jobs:
           go-version: '1.24'
           cache: false
 
-      - name: Prepare MiyooPod files
+      - name: Prepare SDL2 and MiyooPod files
         run: |
           sudo mkdir -p /root/include
           sudo mkdir -p /root/lib
 
-          sudo cp -r upstream/include/SDL2 /root/include/ 2>/dev/null || true
+          sudo cp -r /usr/include/SDL2 /root/include/
           sudo cp -r upstream/libs/* /root/lib/
 
+          sudo chmod 755 /root
           sudo chmod -R a+rX /root/include
           sudo chmod -R a+rX /root/lib
 
@@ -54,7 +62,7 @@ jobs:
         working-directory: modified
         run: make go
 
-      - name: Verify binary
+      - name: Verify ARM binary
         run: |
           file modified/App/MiyooPod/MiyooPod
           test -f modified/App/MiyooPod/MiyooPod
@@ -71,3 +79,4 @@ jobs:
         with:
           name: MiyooPod-Artist-Album-mod
           path: MiyooPod-Artist-Album-mod.zip
+          if-no-files-found: error
