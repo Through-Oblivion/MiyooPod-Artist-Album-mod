@@ -11,25 +11,39 @@ jobs:
     runs-on: ubuntu-24.04
 
     steps:
-      - name: Checkout
+      - name: Checkout modified source
         uses: actions/checkout@v4
 
-      - name: Install ARM compiler
+      - name: Checkout upstream runtime files
+        uses: actions/checkout@v4
+        with:
+          repository: danfragoso/miyoopod
+          path: upstream
+          fetch-depth: 1
+
+      - name: Install build tools and SDL2 headers
         run: |
-          sudo dpkg --add-architecture armhf
           sudo apt-get update
-          sudo apt-get install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf make
+          sudo apt-get install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf make zip libsdl2-dev
+          sudo mkdir -p /root/include /root/lib
+          sudo cp -a /usr/include/SDL2 /root/include/
+          sudo cp -a upstream/libs/. /root/lib/
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
+          go-version: '1.22.2'
           cache: true
+
+      - name: Prepare MiyooPod app directory
+        run: |
+          mkdir -p App
+          cp -a upstream/App/MiyooPod App/
 
       - name: Download Go dependencies
         run: go mod download
 
-      - name: Build MiyooPod
+      - name: Build modified MiyooPod
         env:
           GOOS: linux
           GOARCH: arm
@@ -39,21 +53,19 @@ jobs:
           CXX: arm-linux-gnueabihf-g++
         run: make go
 
-      - name: Verify binary
+      - name: Verify ARM binary
         run: |
           file App/MiyooPod/MiyooPod
           test -x App/MiyooPod/MiyooPod
 
-      - name: Package MiyooPod
+      - name: Package app
         run: |
-          mkdir -p artifact
-          cp -a App/MiyooPod artifact/
-          cd artifact
-          zip -r ../MiyooPod-arm-feature-grouping.zip MiyooPod
+          cd App
+          zip -r ../MiyooPod-feature-grouping.zip MiyooPod
 
-      - name: Upload compiled MiyooPod
+      - name: Upload ready-to-use MiyooPod
         uses: actions/upload-artifact@v4
         with:
-          name: MiyooPod-arm-feature-grouping
-          path: MiyooPod-arm-feature-grouping.zip
+          name: MiyooPod-feature-grouping
+          path: MiyooPod-feature-grouping.zip
           if-no-files-found: error
