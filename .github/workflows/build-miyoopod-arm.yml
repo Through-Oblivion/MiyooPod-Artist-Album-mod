@@ -17,7 +17,7 @@ jobs:
           path: modified
           fetch-depth: 1
 
-      - name: Checkout Miyoo SDL2 environment
+      - name: Checkout Miyoo SDL2
         uses: actions/checkout@v4
         with:
           repository: XK9274/sdl2_miyoo
@@ -31,7 +31,7 @@ jobs:
           path: upstream
           fetch-depth: 1
 
-      - name: Fix Debian Buster sources inside Dockerfile
+      - name: Fix old Debian Buster repositories
         working-directory: sdl2_miyoo
         run: |
           python3 - <<'PY'
@@ -44,62 +44,108 @@ jobs:
               "FROM debian:buster\n",
               """FROM debian:buster
 
-          RUN sed -i 's|deb.debian.org/debian|archive.debian.org/debian|g' /etc/apt/sources.list && \\
-              sed -i 's|deb.debian.org/debian-security|archive.debian.org/debian-security|g' /etc/apt/sources.list && \\
+          RUN sed -i 's|deb.debian.org/debian|archive.debian.org/debian|g' /etc/apt/sources.list && \
+              sed -i 's|deb.debian.org/debian-security|archive.debian.org/debian-security|g' /etc/apt/sources.list && \
               printf 'Acquire::Check-Valid-Until "false";\\n' > /etc/apt/apt.conf.d/99no-check-valid-until
 
           """
           )
 
+          text = text.replace(
+              "https://github.com/steward-fu/nds_miyoo/releases/download/assets/toolchain.tar.gz",
+              "https://github.com/steward-fu/website/releases/download/miyoo-mini-plus/toolchain.tar.gz"
+          )
+
           p.write_text(text)
           PY
 
-          echo "===== Dockerfile ====="
+          echo "===== FINAL DOCKERFILE ====="
           cat Dockerfile
-          echo "======================"
+          echo "============================"
 
-      - name: Build Miyoo SDL2 toolchain
+      - name: Build Miyoo SDL2 Docker image
         working-directory: sdl2_miyoo
         run: |
           docker build --network=host -t mmiyoo .
+
+      - name: Build Miyoo SDL2 libraries
+        working-directory: sdl2_miyoo
+        run: |
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE/sdl2_miyoo:/nds_miyoo" \
+            mmiyoo \
+            /bin/bash -c "cd /nds_miyoo && make sdl2"
+
+      - name: Inspect SDL2 build output
+        working-directory: sdl2_miyoo
+        run: |
+          echo "===== SDL2 files ====="
+          find . -type f \( \
+            -name 'SDL.h' -o \
+            -name '_real_SDL_config.h' -o \
+            -name 'libSDL2.so*' -o \
+            -name 'libSDL2.a' -o \
+            -name 'libSDL2_mixer.so*' -o \
+            -name 'libSDL2_mixer.a' \
+          \) -print
+          echo "======================"
 
       - name: Extract Miyoo toolchain
         run: |
           CONTAINER_ID=$(docker create mmiyoo)
 
           docker cp "$CONTAINER_ID:/opt/mmiyoo" ./mmiyoo
+          docker cp "$CONTAINER_ID:/opt/prebuilt" ./prebuilt || true
 
           docker rm "$CONTAINER_ID"
 
-          echo "===== Toolchain ====="
-          find mmiyoo -maxdepth 3 -type d | head -100
-          echo "====================="
-
-      - name: Prepare MiyooPod build environment
+      - name: Prepare MiyooPod SDL2 environment
         run: |
           sudo mkdir -p /root/include
           sudo mkdir -p /root/lib
 
-          if [ -d "mmiyoo/include/SDL2" ]; then
-            sudo cp -r mmiyoo/include/SDL2 /root/include/
+          echo "Searching for SDL2 headers..."
+
+          SDL2_DIR=$(find "$GITHUB_WORKSPACE/sdl2_miyoo" \
+            -type d \
+            -path '*/include/SDL2' \
+            | head -n 1)
+
+          if [ -n "$SDL2_DIR" ]; then
+            echo "Found SDL2 headers: $SDL2_DIR"
+            sudo cp -r "$SDL2_DIR" /root/include/
+          else
+            echo "ERROR: SDL2 headers were not found"
+            exit 1
           fi
 
-          if [ -d "mmiyoo/usr/include/SDL2" ]; then
-            sudo cp -r mmiyoo/usr/include/SDL2 /root/include/
-          fi
+          echo "Searching for SDL2 libraries..."
 
-          if [ -d "mmiyoo/lib" ]; then
-            sudo cp -r mmiyoo/lib/* /root/lib/ || true
-          fi
-
-          if [ -d "mmiyoo/usr/lib" ]; then
-            sudo cp -r mmiyoo/usr/lib/* /root/lib/ || true
-          fi
+          find "$GITHUB_WORKSPACE/sdl2_miyoo" \
+            -type f \
+            \( \
+              -name 'libSDL2.so*' -o \
+              -name 'libSDL2.a' -o \
+              -name 'libSDL2_mixer.so*' -o \
+              -name 'libSDL2_mixer.a' \
+            \) \
+            -exec sudo cp {} /root/lib/ \;
 
           sudo chmod 755 /root
           sudo chmod -R a+rX /root/include
           sudo chmod -R a+rX /root/lib
 
+          echo "===== /root/include/SDL2 ====="
+          find /root/include/SDL2 -maxdepth 1 -type f | sort
+
+          echo "===== /root/lib ====="
+          find /root/lib -maxdepth 1 -type f | sort
+
+          echo "===== Checking required config ====="
+          test -f /root/include/SDL2/_real_SDL_config.h
+
+      - name: Prepare MiyooPod application files
+        run: |
           mkdir -p modified/App/MiyooPod
           cp -r upstream/App/MiyooPod/* modified/App/MiyooPod/
 
@@ -119,10 +165,25 @@ jobs:
         run: |
           go mod download
 
-      - name: Find Miyoo ARM compiler
+      - name: Configure Miyoo ARM compiler
         run: |
-          echo "Searching for ARM compiler..."
-          find mmiyoo -type f -name 'arm-linux-gnueabihf-gcc' -print
+          COMPILER=$(find "$GITHUB_WORKSPACE/mmiyoo" \
+            -type f \
+            -name 'arm-linux-gnueabihf-gcc' \
+            | head -n 1)
+
+          if [ -z "$COMPILER" ]; then
+            echo "ERROR: Miyoo ARM compiler not found"
+            exit 1
+          fi
+
+          echo "Using compiler:"
+          echo "$COMPILER"
+
+          echo "CC=$COMPILER" >> "$GITHUB_ENV"
+          echo "CGO_ENABLED=1" >> "$GITHUB_ENV"
+          echo "GOARCH=arm" >> "$GITHUB_ENV"
+          echo "GOOS=linux" >> "$GITHUB_ENV"
 
       - name: Build modified MiyooPod
         working-directory: modified
@@ -137,6 +198,7 @@ jobs:
       - name: Package MiyooPod
         run: |
           mkdir -p package/MiyooPod
+
           cp -r modified/App/MiyooPod/* package/MiyooPod/
 
           cd package
